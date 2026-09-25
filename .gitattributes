@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.exe binary
+*.dll binary
+*.zip binary
+
+bin/mac_linux/exiftool text eol=lf
+Start-AI-Tagger-Windows.bat text eol=crlf

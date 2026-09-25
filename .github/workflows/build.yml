@@ -1,0 +1,83 @@
+name: Build standalone apps
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            bin_dir: bin/win
+            artifact: dist/AI Image Tagger.exe
+          - os: macos-latest
+            platform: macos
+            bin_dir: bin/mac_linux
+            artifact: dist/AI Image Tagger.app
+          - os: ubuntu-latest
+            platform: linux
+            bin_dir: bin/mac_linux
+            artifact: dist/AI Image Tagger
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Tk (Linux)
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-tk
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build
+        run: pyinstaller --onefile --windowed --name "AI Image Tagger" ai_tagger_gui.py
+
+      - name: Assemble release folder
+        shell: bash
+        run: |
+          mkdir -p package
+          cp -R "${{ matrix.artifact }}" package/
+          mkdir -p "package/$(basename ${{ matrix.bin_dir }})"
+          cp -R "${{ matrix.bin_dir }}"/* "package/$(basename ${{ matrix.bin_dir }})/"
+          cp README.txt package/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AI-Image-Tagger-${{ matrix.platform }}
+          path: package/
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Zip each platform folder
+        run: |
+          cd artifacts
+          for d in */; do
+            name="${d%/}"
+            (cd "$name" && zip -r "../${name}.zip" .)
+          done
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip
