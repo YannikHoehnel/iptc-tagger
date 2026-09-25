@@ -1,0 +1,8 @@
+stages:
+  - test
+
+test-github-connectivity:
+  stage: test
+  image: curlimages/curl:latest
+  script:
+    - curl -v -I https://api.github.com
