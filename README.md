@@ -1,1 +1,0 @@
-# iptc-tagger
