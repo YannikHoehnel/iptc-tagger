@@ -1,8 +1,60 @@
 stages:
-  - test
+  - mirror
 
-test-github-connectivity:
-  stage: test
-  image: curlimages/curl:latest
+# Manually triggered: run this pipeline with a "MIRROR_TAG" variable set to
+# the GitHub release tag you want mirrored (e.g. MIRROR_TAG=v1.0.6), via
+# GitLab's "Run pipeline" UI. GitHub Actions runners can't reach this
+# internal GitLab instance, so mirroring has to be pulled from this side
+# instead of pushed from GitHub.
+mirror-release-from-github:
+  stage: mirror
+  image: alpine:3.20
+  rules:
+    - if: '$MIRROR_TAG'
   script:
-    - curl -v -I https://api.github.com
+    - apk add --no-cache curl jq
+    - |
+      set -e
+      REPO="YannikHoehnel/iptc-tagger"
+
+      echo "Looking up GitHub release for tag ${MIRROR_TAG}..."
+      release_json=$(curl -sf -H "Authorization: token ${GH_READ_TOKEN}" \
+        -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/${REPO}/releases/tags/${MIRROR_TAG}")
+
+      sha=$(curl -sf -H "Authorization: token ${GH_READ_TOKEN}" \
+        "https://api.github.com/repos/${REPO}/git/ref/tags/${MIRROR_TAG}" | jq -r '.object.sha')
+      echo "Tag ${MIRROR_TAG} points at commit ${sha} on GitHub."
+
+      echo "Creating matching tag on GitLab..."
+      curl -sf --request POST --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/tags?tag_name=${MIRROR_TAG}&ref=${sha}" \
+        || echo "Tag already exists on GitLab, continuing."
+
+      mkdir -p downloads
+      echo "$release_json" | jq -c '.assets[]' | while read -r asset; do
+        id=$(echo "$asset" | jq -r '.id')
+        name=$(echo "$asset" | jq -r '.name')
+        echo "Downloading ${name}..."
+        curl -sfL -H "Authorization: token ${GH_READ_TOKEN}" \
+          -H "Accept: application/octet-stream" \
+          "https://api.github.com/repos/${REPO}/releases/assets/${id}" \
+          -o "downloads/${name}"
+      done
+
+      links="[]"
+      for f in downloads/*; do
+        name="$(basename "$f")"
+        url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/ai-image-tagger/${MIRROR_TAG}/${name}"
+        echo "Uploading ${name} to GitLab package registry..."
+        curl -sf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "$f" "$url"
+        links=$(echo "$links" | jq --arg name "$name" --arg url "$url" '. + [{"name": $name, "url": $url}]')
+      done
+
+      echo "Creating GitLab release ${MIRROR_TAG}..."
+      jq -n --arg tag "$MIRROR_TAG" --argjson links "$links" \
+        '{name: $tag, tag_name: $tag, assets: {links: $links}}' \
+        | curl -sf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --header "Content-Type: application/json" \
+          --data @- "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases" \
+        || echo "GitLab release already exists, continuing."
