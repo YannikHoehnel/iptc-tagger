@@ -51,7 +51,7 @@ jobs:
           mkdir -p package/bin
           cp -R "${{ matrix.artifact }}" package/
           cp -R "${{ matrix.bin_dir }}" package/bin/
-          cp README.txt package/
+          cp "packaging/README-${{ matrix.platform }}.txt" package/README.txt
 
       - uses: actions/upload-artifact@v4
         with:

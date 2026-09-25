@@ -1,10 +1,6 @@
 AI Image Tagger
 ===============
 
-Note: this is the full developer/source README, covering every platform.
-The Windows/macOS/Linux release zips each ship a trimmed README.txt with
-only the instructions for that platform (see packaging/README-*.txt).
-
 This little tool marks images as AI-generated using the official IPTC
 metadata field (DigitalSourceType = "trainedAlgorithmicMedia"). This is
 the standard, industry-recognised tag - most photo/DAM tools and platforms
@@ -14,17 +10,13 @@ It also lets you check whether images already have that tag.
 
 How to start it
 ----------------
-Download the zip for your OS from the project's GitHub Releases page and
-unzip it. No Python install needed - everything required is bundled.
+No installation needed - everything required is bundled.
 
-Windows : double-click "AI Image Tagger.exe"
-Mac     : double-click "AI Image Tagger.app" - see "First time on a Mac"
-          below, macOS will block it once before you can open it
-Linux   : double-click "AI Image Tagger" (or run it from a terminal:
-          ./"AI Image Tagger")
+Double-click "AI Image Tagger.app" to start - see "First time on a Mac"
+below, macOS will block it once before you can open it.
 
-Keep the app next to its "bin" folder - that's where the bundled
-ExifTool lives.
+Keep it next to its "bin" folder - that's where the bundled ExifTool
+lives.
 
 First time on a Mac
 --------------------
@@ -42,18 +34,6 @@ This is normal and only needs to be done once per Mac:
    an "Open" button. Click it.
 
 After this one-time confirmation, the app opens normally from then on.
-
-Running from source (developers)
----------------------------------
-If you'd rather run the Python script directly instead of the packaged
-app, you need Python 3 installed:
-Windows : double-click "Start-AI-Tagger-Windows.bat"
-Mac     : double-click "Start-AI-Tagger-Mac.command"
-Linux   : double-click "Start-AI-Tagger-Linux.sh" (or run it from a
-          terminal: ./Start-AI-Tagger-Linux.sh)
-
-Linux only: if the window doesn't open, you may need the Tk package:
-  sudo apt install python3-tk
 
 How to use it
 -------------
