@@ -14,14 +14,30 @@ Download the zip for your OS from the project's GitHub Releases page and
 unzip it. No Python install needed - everything required is bundled.
 
 Windows : double-click "AI Image Tagger.exe"
-Mac     : double-click "AI Image Tagger.app"
-          (first time: right-click it and choose "Open" if macOS warns
-          about an unidentified developer)
+Mac     : double-click "AI Image Tagger.app" - see "First time on a Mac"
+          below, macOS will block it once before you can open it
 Linux   : double-click "AI Image Tagger" (or run it from a terminal:
           ./"AI Image Tagger")
 
 Keep the app next to its "bin" folder - that's where the bundled
 ExifTool lives.
+
+First time on a Mac
+--------------------
+The app isn't notarized by Apple, so macOS blocks it the first time with
+a warning like "Apple could not verify that this app is free of malware".
+This is normal and only needs to be done once per Mac:
+
+1. Try to open "AI Image Tagger.app" - you'll get the warning. Click
+   "Done" (not "Move to Trash").
+2. Open System Settings > Privacy & Security.
+3. Scroll down to the Security section. You'll see a message that
+   "AI Image Tagger" was blocked, with an "Open Anyway" button next to
+   it. Click it (enter your Mac password/Touch ID if asked).
+4. Open the app again. A second, smaller dialog appears - this one has
+   an "Open" button. Click it.
+
+After this one-time confirmation, the app opens normally from then on.
 
 Running from source (developers)
 ---------------------------------
