@@ -24,25 +24,44 @@ IMAGE_EXTENSIONS = [
     "jpg", "jpeg", "png", "tif", "tiff", "webp", "heic", "heif", "gif", "bmp",
 ]
 
-if getattr(sys, "frozen", False):
-    # Running as a PyInstaller-built executable: use the exe's own folder,
-    # not the temp extraction dir, so the sibling bin/ folder is found.
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.executable))
-else:
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+def _script_dir_candidates():
+    """Folders to look for a sibling bin/ folder in, in order of preference."""
+    if not getattr(sys, "frozen", False):
+        return [os.path.dirname(os.path.abspath(__file__))]
+
+    exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+    candidates = [exe_dir]
+
+    if platform.system() == "Darwin":
+        # Inside a .app bundle the real executable lives at
+        # Name.app/Contents/MacOS/Name, three levels below the folder
+        # that actually holds the sibling bin/ folder in our release zips.
+        bundle_root = exe_dir
+        for _ in range(3):
+            bundle_root = os.path.dirname(bundle_root)
+        candidates.append(bundle_root)
+
+    return candidates
+
+
+def _find_bin(*parts):
+    for base in _script_dir_candidates():
+        path = os.path.join(base, "bin", *parts)
+        if os.path.isfile(path):
+            return path
+    return None
 
 
 def find_exiftool_command():
     """Return the argv prefix used to invoke the bundled ExifTool."""
     if platform.system() == "Windows":
-        exe = os.path.join(SCRIPT_DIR, "bin", "win", "exiftool.exe")
-        if os.path.isfile(exe):
+        exe = _find_bin("win", "exiftool.exe")
+        if exe:
             return [exe]
     else:
-        script = os.path.join(SCRIPT_DIR, "bin", "mac_linux", "exiftool")
-        if os.path.isfile(script):
-            perl = "perl"
-            return [perl, script]
+        script = _find_bin("mac_linux", "exiftool")
+        if script:
+            return ["perl", script]
     # Fall back to a system-wide install, if any.
     return ["exiftool"]
 
