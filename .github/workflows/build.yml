@@ -48,10 +48,9 @@ jobs:
       - name: Assemble release folder
         shell: bash
         run: |
-          mkdir -p package
+          mkdir -p package/bin
           cp -R "${{ matrix.artifact }}" package/
-          mkdir -p "package/$(basename ${{ matrix.bin_dir }})"
-          cp -R "${{ matrix.bin_dir }}"/* "package/$(basename ${{ matrix.bin_dir }})/"
+          cp -R "${{ matrix.bin_dir }}" package/bin/
           cp README.txt package/
 
       - uses: actions/upload-artifact@v4
